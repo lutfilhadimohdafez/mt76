@@ -1013,6 +1013,8 @@ mt7615_set_antenna(struct ieee80211_hw *hw, int radio_idx,
 	phy->mt76->chainmask = tx_ant;
 
 	mt76_set_stream_caps(phy->mt76, true);
+	if (!ext_phy)
+		mt7615_cap_txbf(dev);
 
 	mt7615_mutex_release(dev);
 

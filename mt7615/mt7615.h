@@ -283,6 +283,9 @@ struct mt7615_dev {
 
 	u32 muar_mask;
 
+	/* tx status counters: all, explicit BF, implicit BF */
+	u32 txbf_stat[3];
+
 	struct mt76_connac_pm pm;
 	struct mt76_connac_coredump coredump;
 };
@@ -487,6 +490,9 @@ u32 mt7615_rf_rr(struct mt7615_dev *dev, u32 wf, u32 reg);
 int mt7615_rf_wr(struct mt7615_dev *dev, u32 wf, u32 reg, u32 val);
 int mt7615_mcu_set_dbdc(struct mt7615_dev *dev);
 int mt7615_mcu_set_eeprom(struct mt7615_dev *dev);
+int mt7615_mcu_set_txbf(struct mt7615_dev *dev);
+void mt7615_cap_txbf(struct mt7615_dev *dev);
+extern bool mt7615_txbf;
 int mt7615_mcu_get_temperature(struct mt7615_dev *dev);
 int mt7615_mcu_set_tx_power(struct mt7615_phy *phy);
 void mt7615_mcu_exit(struct mt7615_dev *dev);

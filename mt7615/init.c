@@ -321,6 +321,9 @@ void mt7615_init_work(struct mt7615_dev *dev)
 	mt7615_mcu_set_eeprom(dev);
 	mt7615_mac_init(dev);
 	mt7615_phy_init(dev);
+	if (mt7615_txbf && is_mt7615(&dev->mt76) &&
+	    mt7615_mcu_set_txbf(dev))
+		dev_warn(dev->mt76.dev, "txbf: enabling eBF failed\n");
 	mt76_connac_mcu_del_wtbl_all(&dev->mt76);
 	mt7615_check_offload_capability(dev);
 }
@@ -416,6 +419,24 @@ mt7615_init_wiphy(struct ieee80211_hw *hw)
 			IEEE80211_VHT_CAP_MAX_A_MPDU_LENGTH_EXPONENT_MASK;
 }
 
+void mt7615_cap_txbf(struct mt7615_dev *dev)
+{
+	u32 *cap = &dev->mphy.sband_5g.sband.vht_cap.cap;
+	int sts = hweight8(dev->mphy.chainmask);
+
+	*cap &= ~(IEEE80211_VHT_CAP_SU_BEAMFORMER_CAPABLE |
+		  IEEE80211_VHT_CAP_SOUNDING_DIMENSIONS_MASK);
+
+	/* SU beamformer only: beamformee would also need
+	 * MT_WF_RFCR1_DROP_BF_POLL cleared in the rx filter
+	 */
+	if (!mt7615_txbf || !is_mt7615(&dev->mt76) || sts < 2)
+		return;
+
+	*cap |= IEEE80211_VHT_CAP_SU_BEAMFORMER_CAPABLE |
+		FIELD_PREP(IEEE80211_VHT_CAP_SOUNDING_DIMENSIONS_MASK, sts - 1);
+}
+
 static void
 mt7615_cap_dbdc_enable(struct mt7615_dev *dev)
 {
@@ -430,6 +451,7 @@ mt7615_cap_dbdc_enable(struct mt7615_dev *dev)
 	dev->mphy.hw->wiphy->available_antennas_rx = dev->mphy.chainmask;
 	dev->mphy.hw->wiphy->available_antennas_tx = dev->mphy.chainmask;
 	mt76_set_stream_caps(&dev->mphy, true);
+	mt7615_cap_txbf(dev);
 }
 
 static void
@@ -443,6 +465,7 @@ mt7615_cap_dbdc_disable(struct mt7615_dev *dev)
 	dev->mphy.hw->wiphy->available_antennas_rx = dev->chainmask;
 	dev->mphy.hw->wiphy->available_antennas_tx = dev->chainmask;
 	mt76_set_stream_caps(&dev->mphy, true);
+	mt7615_cap_txbf(dev);
 }
 
 u32 mt7615_reg_map(struct mt7615_dev *dev, u32 addr)

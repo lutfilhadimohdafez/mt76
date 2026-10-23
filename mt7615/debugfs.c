@@ -562,6 +562,9 @@ int mt7615_init_debugfs(struct mt7615_dev *dev)
 	debugfs_create_devm_seqfile(dev->mt76.dev, "acq", dir,
 				    mt7615_queues_acq);
 	debugfs_create_file("ampdu_stat", 0400, dir, dev, &mt7615_ampdu_stat_fops);
+	debugfs_create_u32("txbf_txs_all", 0400, dir, &dev->txbf_stat[0]);
+	debugfs_create_u32("txbf_txs_ebf", 0400, dir, &dev->txbf_stat[1]);
+	debugfs_create_u32("txbf_txs_ibf", 0400, dir, &dev->txbf_stat[2]);
 	debugfs_create_file("scs", 0600, dir, dev, &fops_scs);
 	debugfs_create_file("dbdc", 0600, dir, dev, &fops_dbdc);
 	debugfs_create_file("fw_debug", 0600, dir, dev, &fops_fw_debug);

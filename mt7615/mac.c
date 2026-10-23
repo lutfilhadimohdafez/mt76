@@ -1306,6 +1306,9 @@ static bool mt7615_fill_txs(struct mt7615_dev *dev, struct mt7615_sta *sta,
 
 	txs = le32_to_cpu(txs_data[1]);
 	ampdu = txs & MT_TXS1_AMPDU;
+	dev->txbf_stat[0]++;
+	dev->txbf_stat[1] += !!(txs & MT_TXS1_E_TXBF);
+	dev->txbf_stat[2] += !!(txs & MT_TXS1_I_TXBF);
 
 	txs = le32_to_cpu(txs_data[3]);
 	count = FIELD_GET(MT_TXS3_TX_COUNT, txs);
