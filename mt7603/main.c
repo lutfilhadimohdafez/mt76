@@ -77,6 +77,8 @@ mt7603_add_interface(struct ieee80211_hw *hw, struct ieee80211_vif *vif)
 	mtxq->wcid = idx;
 	rcu_assign_pointer(dev->mt76.wcid[idx], &mvif->sta.wcid);
 
+	mt76_whnat_add_vif(vif);
+
 out:
 	mutex_unlock(&dev->mt76.mutex);
 
@@ -90,6 +92,8 @@ mt7603_remove_interface(struct ieee80211_hw *hw, struct ieee80211_vif *vif)
 	struct mt7603_sta *msta = &mvif->sta;
 	struct mt7603_dev *dev = hw->priv;
 	int idx = msta->wcid.idx;
+
+	mt76_whnat_remove_vif(vif);
 
 	mt76_wr(dev, MT_MAC_ADDR0(mvif->idx), 0);
 	mt76_wr(dev, MT_MAC_ADDR1(mvif->idx), 0);

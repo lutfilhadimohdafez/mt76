@@ -2188,4 +2188,55 @@ mt76_vif_link_phy(struct mt76_vif_link *mlink)
 	return ctx->phy;
 }
 
+/*
+ * EcoNet EN751221 WHNAT: the SoC PPE can offload NAT flows of radios without
+ * WED. The airoha Ethernet driver provides the hooks; they are looked up at
+ * run time so that mt76 does not depend on it.
+ */
+#if IS_ENABLED(CONFIG_NET_AIROHA_WHNAT)
+int en75_whnat_register_vif(struct net_device *dev);
+void en75_whnat_unregister_vif(struct net_device *dev);
+bool en75_whnat_upstream_early(struct sk_buff *skb);
+
+static inline void mt76_whnat_add_vif(struct ieee80211_vif *vif)
+{
+	struct wireless_dev *wdev = ieee80211_vif_to_wdev(vif);
+	int (*reg)(struct net_device *dev);
+
+	if (!wdev || !wdev->netdev)
+		return;
+
+	reg = symbol_get(en75_whnat_register_vif);
+	if (!reg)
+		return;
+
+	reg(wdev->netdev);
+	symbol_put(en75_whnat_register_vif);
+}
+
+static inline void mt76_whnat_remove_vif(struct ieee80211_vif *vif)
+{
+	struct wireless_dev *wdev = ieee80211_vif_to_wdev(vif);
+	void (*unreg)(struct net_device *dev);
+
+	if (!wdev || !wdev->netdev)
+		return;
+
+	unreg = symbol_get(en75_whnat_unregister_vif);
+	if (!unreg)
+		return;
+
+	unreg(wdev->netdev);
+	symbol_put(en75_whnat_unregister_vif);
+}
+#else
+static inline void mt76_whnat_add_vif(struct ieee80211_vif *vif)
+{
+}
+
+static inline void mt76_whnat_remove_vif(struct ieee80211_vif *vif)
+{
+}
+#endif
+
 #endif
